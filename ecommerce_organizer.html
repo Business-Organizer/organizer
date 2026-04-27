@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Organizer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f4f6f9;--bg2:#fff;--bg3:#f0f2f5;--bg4:#e8eaed;--border:#e2e6ec;--border2:#cdd2da;--text:#1a1f2e;--text2:#5a6478;--text3:#9aa0ae;--accent:#2563eb;--accent2:#1d4ed8;--red:#dc2626;--amber:#d97706;--green:#16a34a;--purple:#7c3aed;--radius:10px;--radius-sm:6px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6}
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:24px 0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:0 20px 24px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.logo-mark{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.logo h1{font-size:13px;font-weight:600;color:var(--text)}
+.logo p{font-size:11px;color:var(--text3);margin-top:2px}
+.nav{flex:1;padding:0 10px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius-sm);cursor:pointer;color:var(--text2);font-size:13px;font-weight:400;transition:all .15s;margin-bottom:2px;border:none;background:transparent;width:100%;text-align:left}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--bg4);color:var(--accent);font-weight:500}
+.nav-icon{width:16px;height:16px;opacity:.6;flex-shrink:0}
+.nav-item.active .nav-icon{opacity:1}
+.sidebar-footer{padding:16px 20px 0;border-top:1px solid var(--border);margin-top:16px}
+.date-display{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace}
+.date-display span{display:block;color:var(--text2);font-size:12px;margin-top:2px}
+.main{padding:32px 40px;overflow-y:auto;max-height:100vh}
+.panel{display:none}.panel.active{display:block}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px}
+.page-title{font-size:22px;font-weight:600;letter-spacing:-.03em}
+.page-sub{font-size:13px;color:var(--text3);margin-top:3px}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.metrics-5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.metric-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.metric-value{font-size:20px;font-weight:600;color:var(--text);font-family:'DM Mono',monospace;letter-spacing:-.02em}
+.metric-value.accent{color:var(--accent)}
+.metric-value.green{color:var(--green)}
+.metric-value.red{color:var(--red)}
+.metric-value input{font-size:20px;font-weight:600;color:var(--text);font-family:'DM Mono',monospace;background:transparent;border:none;outline:none;width:100%}
+.progress-section{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:20px}
+.progress-info{flex:1}
+.progress-title{font-size:13px;font-weight:500;margin-bottom:8px}
+.progress-bar-bg{height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.progress-bar-fill{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+.progress-pct{font-size:24px;font-weight:600;font-family:'DM Mono',monospace;color:var(--accent);min-width:56px;text-align:right}
+.task-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:visible}
+.task-card-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.task-card-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2)}
+.task-count{font-size:11px;font-family:'DM Mono',monospace;color:var(--text3)}
+.task-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);transition:background .1s}
+.task-row:last-child{border-bottom:none}
+.task-row:hover{background:var(--bg3)}
+.task-row input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--accent);flex-shrink:0}
+.task-text{flex:1;font-size:13px;color:var(--text);cursor:pointer;border-radius:4px;padding:2px 4px}
+.task-text:hover{background:var(--bg4)}
+.task-text.done{text-decoration:line-through;color:var(--text3)}
+.task-text[contenteditable=true]{outline:2px solid var(--accent);background:var(--bg3)}
+.del-task{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:0 4px;border-radius:4px;opacity:0;transition:opacity .15s;flex-shrink:0}
+.task-row:hover .del-task{opacity:1}
+.del-task:hover{color:var(--red);background:#fef2f2}
+.add-task-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-top:1px solid var(--border)}
+.add-task-input{flex:1;background:transparent;border:none;outline:none;font-size:13px;color:var(--text2);font-family:'DM Sans',sans-serif}
+.add-task-input::placeholder{color:var(--text3)}
+.add-task-btn{font-size:20px;color:var(--accent);background:none;border:none;cursor:pointer;line-height:1}
+.badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500;flex-shrink:0;font-family:'DM Mono',monospace}
+.badge-red{background:#fef2f2;color:#dc2626}
+.badge-amber{background:#fffbeb;color:#d97706}
+.badge-green{background:#f0fdf4;color:#16a34a}
+.badge-blue{background:#eff6ff;color:#2563eb}
+.badge-gray{background:var(--bg4);color:var(--text2)}
+.note-area{width:100%;min-height:90px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;resize:vertical;line-height:1.6}
+.note-area:focus{outline:none;border-color:var(--accent)}
+.note-area::placeholder{color:var(--text3)}
+.section-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:12px;margin-top:24px}
+.section-label:first-child{margin-top:0}
+.reset-link{font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;text-decoration:underline;margin-top:12px;display:inline-block;font-family:'DM Sans',sans-serif}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.form-input{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none}
+.form-input:focus{border-color:var(--accent)}
+.form-select{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;cursor:pointer}
+.form-select:focus{border-color:var(--accent)}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
+.card-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2)}
+.table-header{display:grid;padding:10px 16px;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:600}
+.table-row{display:grid;padding:10px 16px;border-bottom:1px solid var(--border);align-items:center;font-size:13px;transition:background .1s}
+.table-row:last-child{border-bottom:none}
+.table-row:hover{background:var(--bg3)}
+.table-empty{padding:24px 16px;text-align:center;color:var(--text3);font-size:13px}
+.del-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:0 4px;border-radius:4px}
+.del-btn:hover{color:var(--red);background:#fef2f2}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:16px}
+.chart-card-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:3px}
+.chart-card-sub{font-size:11px;color:var(--text3);margin-bottom:14px}
+.chart-wrap{position:relative;height:200px}
+.charts-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.charts-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+.chart-full{margin-bottom:16px}
+.platform-bar-row{display:flex;align-items:center;gap:12px;padding:8px 16px;border-bottom:1px solid var(--border)}
+.platform-bar-row:last-child{border-bottom:none}
+.platform-bar-bg{flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.platform-bar-fill{height:6px;border-radius:3px}
+.rank-badge{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.rank-1{background:#fef9c3;color:#854d0e}.rank-2{background:#f1f5f9;color:#475569}.rank-3{background:#fff7ed;color:#9a3412}.rank-o{background:var(--bg4);color:var(--text3)}
+.bar-mini{height:3px;background:var(--bg4);border-radius:2px;margin-top:3px;overflow:hidden}
+.bar-mini-fill{height:3px;border-radius:2px;background:var(--accent)}
+.temu-box{background:#fff8f0;border:1px solid #fbd38d;border-radius:var(--radius);padding:16px 20px;margin-bottom:16px}
+.temu-title{font-size:13px;font-weight:600;color:#92400e;margin-bottom:12px}
+.temu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.temu-metric{background:#fff;border:1px solid #fbd38d;border-radius:var(--radius-sm);padding:12px}
+.temu-label{font-size:11px;color:#b45309;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.temu-input{font-size:20px;font-weight:600;color:#92400e;font-family:'DM Mono',monospace;background:transparent;border:none;outline:none;width:100%}
+.phase-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:10px;display:flex;gap:16px;align-items:flex-start}
+.phase-item.active-phase{border-color:var(--accent)}
+.phase-item.done-phase{opacity:.7}
+.phase-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:600;font-family:'DM Mono',monospace;margin-top:2px}
+.phase-dot.done{background:var(--bg4);color:var(--text3)}
+.phase-dot.active{background:var(--accent);color:#fff}
+.phase-dot.pending{background:var(--bg3);color:var(--text3);border:1px solid var(--border2)}
+.phase-content{flex:1}
+.phase-header-row{display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap}
+.phase-title{font-size:14px;font-weight:600}
+.phase-sub{font-size:12px;color:var(--text2);margin-bottom:8px}
+.phase-task{font-size:12px;color:var(--text3);display:flex;gap:8px;padding:2px 0}
+.phase-task::before{content:"—";flex-shrink:0}
+.focus-input-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.focus-num{font-size:20px;font-weight:600;font-family:'DM Mono',monospace;color:var(--text3);width:24px;flex-shrink:0}
+.focus-input{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none}
+.focus-input:focus{border-color:var(--accent)}
+.focus-input::placeholder{color:var(--text3)}
+.month-inputs{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px}
+.month-input-group{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px}
+.month-input-label{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.month-input-sub{font-size:10px;color:var(--text3);margin-bottom:3px;margin-top:6px}
+.month-mini-input{width:100%;background:transparent;border:none;outline:none;font-size:14px;font-weight:600;color:var(--text);font-family:'DM Mono',monospace}
+.month-mini-input::placeholder{color:var(--text3);font-weight:400}
+.kpi-table{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:20px}
+.kpi-header{display:grid;grid-template-columns:1fr 90px 90px 70px;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:600}
+.kpi-row{display:grid;grid-template-columns:1fr 90px 90px 70px;gap:8px;padding:11px 16px;border-bottom:1px solid var(--border);align-items:center}
+.kpi-row:last-child{border-bottom:none}
+.kpi-row:hover{background:var(--bg3)}
+.kpi-name{font-size:13px;color:var(--text)}
+.kpi-target{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;text-align:right}
+.kpi-input{font-size:13px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Mono',monospace;padding:4px 8px;text-align:right;outline:none;width:100%}
+.kpi-input:focus{border-color:var(--accent)}
+.kpi-trend{font-size:12px;font-family:'DM Mono',monospace;text-align:right}
+.trend-up{color:var(--green)}.trend-down{color:var(--red)}.trend-flat{color:var(--text3)}
+.btn{background:transparent;border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px 14px;font-size:12px;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;margin-right:8px}
+.btn:hover{background:var(--bg3);color:var(--text)}
+.btn-accent{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+.btn-accent:hover{background:var(--accent2);color:#fff}
+.btn-sm{padding:6px 12px;font-size:12px}
+.sort-btn{background:none;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:11px;color:var(--text2);padding:4px 10px;font-family:'DM Sans',sans-serif}
+.sort-btn.active-sort{background:var(--accent);color:#fff;border-color:var(--accent)}
+.setup-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--radius);padding:20px 24px;margin-bottom:20px}
+.tab-row{display:flex;gap:4px;margin-bottom:16px;background:var(--bg3);padding:4px;border-radius:var(--radius-sm)}
+.tab-btn{flex:1;padding:7px;font-size:12px;font-weight:500;border:none;border-radius:var(--radius-sm);cursor:pointer;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .15s}
+.tab-btn.active{background:var(--bg2);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.save-toast{position:fixed;bottom:24px;right:24px;background:var(--accent);color:#fff;padding:10px 18px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:100}
+.save-toast.show{opacity:1}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" style="display:none;position:fixed;inset:0;background:#f4f6f9;z-index:9999;display:flex;align-items:center;justify-content:center">
+  <div style="background:#fff;border:1px solid #e2e6ec;border-radius:16px;padding:40px 48px;width:380px;box-shadow:0 4px 24px rgba(0,0,0,.08);text-align:center">
+    <div style="width:48px;height:48px;background:#2563eb;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
+      <svg width="22" height="22" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" fill="#fff"/><rect x="9" y="2" width="5" height="5" rx="1" fill="#fff"/><rect x="2" y="9" width="5" height="5" rx="1" fill="#fff"/><rect x="9" y="9" width="5" height="5" rx="1" fill="#fff"/></svg>
+    </div>
+    <div style="font-family:'DM Sans',sans-serif;font-size:20px;font-weight:600;color:#1a1f2e;margin-bottom:6px">Business Organizer</div>
+    <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:#9aa0ae;margin-bottom:28px">Bitte Passwort eingeben</div>
+    <input type="password" id="login-input" placeholder="Passwort" onkeydown="if(event.key==='Enter')checkLogin()"
+      style="width:100%;padding:12px 16px;border:1px solid #e2e6ec;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;margin-bottom:12px;color:#1a1f2e;background:#f4f6f9">
+    <button onclick="checkLogin()"
+      style="width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
+      Einloggen
+    </button>
+    <div id="login-error" style="color:#dc2626;font-size:12px;margin-top:10px;font-family:'DM Sans',sans-serif;display:none">Falsches Passwort</div>
+    <div style="font-size:11px;color:#9aa0ae;margin-top:20px;font-family:'DM Sans',sans-serif">Passwort ändern: im Organizer unter Einstellungen</div>
+  </div>
+</div>
+
+<div id="app-content" style="display:none">
+<div class="app">
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" fill="#fff"/><rect x="9" y="2" width="5" height="5" rx="1" fill="#fff"/><rect x="2" y="9" width="5" height="5" rx="1" fill="#fff"/><rect x="9" y="9" width="5" height="5" rx="1" fill="#fff"/></svg>
+    </div>
+    <h1>Business Organizer</h1>
+    <p>E-Commerce Dashboard</p>
+  </div>
+  <nav class="nav">
+    <button class="nav-item active" onclick="showPanel('daily',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M5 11h4"/></svg>Daily Tasks
+    </button>
+    <button class="nav-item" onclick="showPanel('umsatz',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 13L6 7l3 3 3-4 2-2"/></svg>Umsatz
+    </button>
+    <button class="nav-item" onclick="showPanel('retouren',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h10M9 4l4 4-4 4"/></svg>Retouren
+    </button>
+    <button class="nav-item" onclick="showPanel('produkte',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>Produkte
+    </button>
+    <button class="nav-item" onclick="showPanel('kpi',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="9" width="3" height="5" rx="1"/><rect x="6.5" y="5" width="3" height="9" rx="1"/><rect x="11" y="2" width="3" height="12" rx="1"/></svg>KPI & Charts
+    </button>
+    <button class="nav-item" onclick="showPanel('roadmap',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="4" r="2"/><circle cx="8" cy="12" r="2"/><path d="M8 6v4"/><circle cx="3" cy="10" r="2"/><path d="M5 9L7 7"/></svg>Fahrplan
+    </button>
+    <button class="nav-item" onclick="showPanel('fokus',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2"/></svg>Wochenfokus
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="date-display">Heute<span id="current-date">—</span></div>
+    <button class="btn btn-accent" style="margin-top:12px;width:100%;text-align:center;margin-right:0" onclick="saveAll()">Speichern</button>
+    <button onclick="changePassword()" style="margin-top:8px;width:100%;background:none;border:none;font-size:11px;color:var(--text3);cursor:pointer;font-family:'DM Sans',sans-serif;text-align:center">🔒 Passwort ändern</button>
+  </div>
+</aside>
+
+<main class="main">
+
+<!-- DAILY -->
+<div id="panel-daily" class="panel active">
+  <div class="page-header">
+    <div><div class="page-title">Daily Tasks</div><div class="page-sub">Doppelklick zum Bearbeiten · Enter zum Bestätigen</div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn" onclick="manualDayReset()">Neuer Tag</button>
+      <button class="btn" onclick="resetTasks()">Tasks zurücksetzen</button>
+    </div>
+  </div>
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Bestellungen heute</div><div class="metric-value"><input type="number" id="m-orders" placeholder="0" oninput="calcMetrics();saveAll()"></div></div>
+    <div class="metric"><div class="metric-label">Umsatz heute (€)</div><div class="metric-value"><input type="number" id="m-revenue" placeholder="0" oninput="calcMetrics();saveAll()"></div></div>
+    <div class="metric"><div class="metric-label">Gewinn ~15% (€)</div><div class="metric-value accent" id="m-profit">—</div></div>
+    <div class="metric"><div class="metric-label">Retouren heute</div><div class="metric-value"><input type="number" id="m-returns" placeholder="0" oninput="saveAll()"></div></div>
+  </div>
+  <div class="progress-section">
+    <div class="progress-info">
+      <div class="progress-title">Tages-Fortschritt</div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div class="progress-pct" id="progress-pct">0%</div>
+  </div>
+  <div class="section-label">Morgens — vor 10 Uhr</div>
+  <div class="task-card">
+    <div class="task-card-header"><span class="task-card-title">Prioritäten</span><span class="task-count" id="morning-count">0/4</span></div>
+    <div id="tasks-morning"></div>
+    <div class="add-task-row"><input class="add-task-input" id="add-morning" placeholder="+ Task hinzufügen..." onkeydown="if(event.key==='Enter')addTask('morning')"><button class="add-task-btn" onclick="addTask('morning')">+</button></div>
+  </div>
+  <div class="section-label">Mittags — Operativ</div>
+  <div class="task-card">
+    <div class="task-card-header"><span class="task-card-title">Operations</span><span class="task-count" id="midday-count">0/4</span></div>
+    <div id="tasks-midday"></div>
+    <div class="add-task-row"><input class="add-task-input" id="add-midday" placeholder="+ Task hinzufügen..." onkeydown="if(event.key==='Enter')addTask('midday')"><button class="add-task-btn" onclick="addTask('midday')">+</button></div>
+  </div>
+  <div class="section-label">Abends — Wachstum</div>
+  <div class="task-card">
+    <div class="task-card-header"><span class="task-card-title">Strategie</span><span class="task-count" id="evening-count">0/4</span></div>
+    <div id="tasks-evening"></div>
+    <div class="add-task-row"><input class="add-task-input" id="add-evening" placeholder="+ Task hinzufügen..." onkeydown="if(event.key==='Enter')addTask('evening')"><button class="add-task-btn" onclick="addTask('evening')">+</button></div>
+  </div>
+  <div class="section-label">Notizen</div>
+  <textarea class="note-area" id="daily-notes" placeholder="Wichtige Punkte, Probleme, Ideen..." oninput="saveAll()"></textarea>
+  <button class="reset-link" onclick="resetTasks()">Alle Tasks zurücksetzen</button>
+</div>
+
+<!-- UMSATZ -->
+<div id="panel-umsatz" class="panel">
+  <div class="page-header">
+    <div><div class="page-title">Umsatz</div><div class="page-sub">Täglich, monatlich, jährlich — gesamt & pro Plattform</div></div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-sm" onclick="showUmsatzTab('gesamt')" id="utab-gesamt" style="border-color:var(--accent);color:var(--accent)">Gesamt</button>
+      <button class="btn btn-sm" onclick="showUmsatzTab('plattform')" id="utab-plattform">Plattform</button>
+      <button class="btn btn-sm" onclick="showUmsatzTab('eingabe')" id="utab-eingabe">Daten eingeben</button>
+    </div>
+  </div>
+
+  <!-- Gesamt Tab -->
+  <div id="utab-gesamt-content">
+    <div class="metrics">
+      <div class="metric"><div class="metric-label">Heute (€)</div><div class="metric-value accent" id="u-today">—</div></div>
+      <div class="metric"><div class="metric-label">Dieser Monat (€)</div><div class="metric-value accent" id="u-month">—</div></div>
+      <div class="metric"><div class="metric-label">Dieses Jahr (€)</div><div class="metric-value accent" id="u-year">—</div></div>
+      <div class="metric"><div class="metric-label">Ø Bestellwert (€)</div><div class="metric-value" id="u-avg">—</div></div>
+    </div>
+    <div class="chart-full chart-card">
+      <div class="chart-card-title">Monatsumsatz Gesamt</div>
+      <div class="chart-card-sub">Alle Plattformen kombiniert</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="chart-umsatz-gesamt"></canvas></div>
+    </div>
+    <div class="charts-2">
+      <div class="chart-card">
+        <div class="chart-card-title">Gewinnentwicklung</div>
+        <div class="chart-card-sub">Geschätzter Gewinn ~15%</div>
+        <div class="chart-wrap"><canvas id="chart-gewinn"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-title">Bestellungen / Tag (Ø)</div>
+        <div class="chart-card-sub">Durchschnitt pro Monat</div>
+        <div class="chart-wrap"><canvas id="chart-bestellungen"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plattform Tab -->
+  <div id="utab-plattform-content" style="display:none">
+    <div class="metrics-5">
+      <div class="metric"><div class="metric-label">Kaufland (€)</div><div class="metric-value" id="pu-kaufland">—</div></div>
+      <div class="metric"><div class="metric-label">eBay (€)</div><div class="metric-value" id="pu-ebay">—</div></div>
+      <div class="metric"><div class="metric-label">Temu (€)</div><div class="metric-value" id="pu-temu">—</div></div>
+      <div class="metric"><div class="metric-label">Eigenshop (€)</div><div class="metric-value" id="pu-shop">—</div></div>
+      <div class="metric"><div class="metric-label">Worten (€)</div><div class="metric-value" id="pu-worten">—</div></div>
+    </div>
+    <div class="charts-2">
+      <div class="chart-card">
+        <div class="chart-card-title">Umsatz nach Plattform</div>
+        <div class="chart-card-sub">Aktueller Monat</div>
+        <div class="chart-wrap"><canvas id="chart-plattform-pie"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-title">Plattform-Entwicklung</div>
+        <div class="chart-card-sub">Monatlicher Verlauf</div>
+        <div class="chart-wrap"><canvas id="chart-plattform-line"></canvas></div>
+      </div>
+    </div>
+    <div class="section-label">Umsatzverteilung</div>
+    <div class="card"><div id="platform-bars"></div></div>
+  </div>
+
+  <!-- Eingabe Tab -->
+  <div id="utab-eingabe-content" style="display:none">
+    <div class="section-label">Monatsdaten eingeben (letzte 6 Monate)</div>
+    <div class="month-inputs" id="umsatz-month-inputs"></div>
+    <div class="section-label">Temu — manuelle Tageserfassung</div>
+    <div class="temu-box">
+      <div class="temu-title">Temu ist nicht in Billbee — hier manuell eintragen</div>
+      <div class="temu-grid">
+        <div class="temu-metric"><div class="temu-label">Bestellungen</div><input class="temu-input" type="number" id="temu-orders" placeholder="0" oninput="saveAll()"></div>
+        <div class="temu-metric"><div class="temu-label">Umsatz (€)</div><input class="temu-input" type="number" id="temu-revenue" placeholder="0" oninput="saveAll()"></div>
+        <div class="temu-metric"><div class="temu-label">Retouren</div><input class="temu-input" type="number" id="temu-returns-daily" placeholder="0" oninput="saveAll()"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RETOUREN -->
+<div id="panel-retouren" class="panel">
+  <div class="page-header">
+    <div><div class="page-title">Retouren</div><div class="page-sub">Jede Retoure erfassen — automatische Auswertung nach Produkt & Plattform</div></div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <select class="form-select" id="ret-filter-month" onchange="renderRetouren()" style="font-size:12px;padding:6px 10px"></select>
+      <button class="btn btn-sm" onclick="exportRetouren()">CSV Export</button>
+    </div>
+  </div>
+
+  <div class="section-label">Neue Retoure erfassen</div>
+  <div class="card" style="padding:16px 20px;overflow:visible">
+    <div style="display:grid;grid-template-columns:1fr 120px 130px 80px;gap:10px;align-items:end;margin-bottom:10px">
+      <div class="form-group"><label class="form-label">Produktname</label><input class="form-input" type="text" id="ret-product" placeholder="z.B. Sennheiser CX 300S Schwarz"></div>
+      <div class="form-group"><label class="form-label">Plattform</label>
+        <select class="form-select" id="ret-platform">
+          <option>Kaufland</option><option>eBay</option><option>Temu</option><option>Eigenshop</option><option>Worten</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Grund</label>
+        <select class="form-select" id="ret-reason">
+          <option>Defekt</option><option>Falsch geliefert</option><option>Nicht gefallen</option><option>Beschädigt</option><option>Nicht erhalten</option><option>Sonstiges</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">&nbsp;</label></div>
+    </div>
+    <div style="display:grid;grid-template-columns:130px 150px 1fr 80px;gap:10px;align-items:end">
+      <div class="form-group"><label class="form-label">Artikelpreis (€)</label><input class="form-input" type="number" id="ret-price" placeholder="0.00" step="0.01" min="0"></div>
+      <div class="form-group"><label class="form-label">Rücksendekosten (€)</label><input class="form-input" type="number" id="ret-shipping" placeholder="0.00" step="0.01" min="0"></div>
+      <div></div>
+      <div class="form-group"><label class="form-label">&nbsp;</label><button class="btn btn-accent btn-sm" onclick="addRetoure()" style="margin-right:0;width:100%">Eintragen</button></div>
+    </div>
+  </div>
+
+  <div class="section-label">Auswertung</div>
+  <div class="charts-3">
+    <div class="chart-card">
+      <div class="chart-card-title">Nach Plattform</div>
+      <div class="chart-card-sub">Retouren je Kanal</div>
+      <div class="chart-wrap"><canvas id="chart-ret-platform"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Nach Grund</div>
+      <div class="chart-card-sub">Häufigste Ursachen</div>
+      <div class="chart-wrap"><canvas id="chart-ret-reason"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Verlauf</div>
+      <div class="chart-card-sub">Retouren pro Monat</div>
+      <div class="chart-wrap"><canvas id="chart-ret-trend"></canvas></div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Top Produkte mit Retouren</span></div>
+      <div id="ret-top-products"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Zusammenfassung</span></div>
+      <div id="ret-summary"></div>
+    </div>
+  </div>
+
+  <div class="section-label">Alle Retouren</div>
+  <div class="card">
+    <div class="table-header" style="grid-template-columns:1fr 110px 130px 80px 80px 80px 90px 36px">
+      <span>Produkt</span><span>Plattform</span><span>Grund</span><span style="text-align:right">Artikel (€)</span><span style="text-align:right">Versand (€)</span><span style="text-align:right">Verlust (€)</span><span>Datum</span><span></span>
+    </div>
+    <div id="ret-list"></div>
+  </div>
+</div>
+
+<!-- PRODUKTE -->
+<div id="panel-produkte" class="panel">
+  <div class="page-header">
+    <div><div class="page-title">Produkte</div><div class="page-sub">Top-Seller aus Billbee — automatisch geladen</div></div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <select class="form-select" id="prod-days" onchange="loadBillbeeProducts()" style="font-size:12px;padding:6px 10px">
+        <option value="30">30 Tage</option><option value="60">60 Tage</option><option value="90">90 Tage</option>
+      </select>
+      <button class="sort-btn active-sort" id="sort-sold" onclick="sortProds('sold')">Verkäufe</button>
+      <button class="sort-btn" id="sort-revenue" onclick="sortProds('revenue')">Umsatz</button>
+      <button class="btn btn-accent btn-sm" onclick="loadBillbeeProducts()" style="margin-right:0">Aktualisieren</button>
+    </div>
+  </div>
+
+  <div id="bb-setup" class="setup-box">
+    <div style="font-size:14px;font-weight:600;color:#1e40af;margin-bottom:8px">Billbee API einrichten</div>
+    <div style="font-size:13px;color:#3730a3;margin-bottom:14px">Einmalig eingeben — wird nur lokal in deinem Browser gespeichert.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+      <div class="form-group"><label class="form-label">API-Key</label><input class="form-input" type="password" id="bb-apikey" placeholder="Von Billbee erhalten"></div>
+      <div class="form-group"><label class="form-label">Benutzername (E-Mail)</label><input class="form-input" type="text" id="bb-username" placeholder="deine@email.de"></div>
+      <div class="form-group"><label class="form-label">API-Passwort</label><input class="form-input" type="password" id="bb-password" placeholder="In Billbee Einstellungen"></div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="btn btn-accent" onclick="saveBBCreds()" style="margin-right:0">Speichern & Verbinden</button>
+      <button class="btn btn-sm" onclick="document.getElementById('bb-setup').style.display='none'">Ausblenden</button>
+      <span style="font-size:11px;color:#6b7280">API-Passwort: Billbee → Einstellungen → Billbee API</span>
+    </div>
+    <div id="bb-status" style="margin-top:8px;font-size:12px"></div>
+  </div>
+
+  <div id="prod-loading" style="display:none;text-align:center;padding:32px;color:var(--text3);font-size:13px">Lade aus Billbee...</div>
+  <div id="prod-error" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:var(--radius);padding:12px 16px;font-size:13px;color:#991b1b;margin-bottom:16px"></div>
+
+  <div class="chart-full chart-card" id="prod-chart-wrap" style="display:none">
+    <div class="chart-card-title">Top 10 Produkte</div>
+    <div class="chart-card-sub" id="prod-chart-sub">nach Verkäufen</div>
+    <div class="chart-wrap" style="height:220px"><canvas id="chart-products"></canvas></div>
+  </div>
+
+  <div class="card" id="prod-table-wrap" style="display:none">
+    <div class="table-header" style="grid-template-columns:2fr 110px 80px 100px 36px">
+      <span>Produkt / SKU</span><span style="text-align:right">Plattform</span><span style="text-align:right">Verkäufe</span><span style="text-align:right">Umsatz</span><span></span>
+    </div>
+    <div id="prod-list"></div>
+  </div>
+
+  <div class="section-label">Temu — manuelle Top-Seller</div>
+  <div class="temu-box">
+    <div class="temu-title">Temu Produkte manuell erfassen</div>
+    <div style="display:grid;grid-template-columns:1fr 100px 80px;gap:10px;align-items:end;margin-bottom:10px">
+      <div class="form-group"><label class="form-label">Produktname</label><input class="form-input" type="text" id="temu-prod-name" placeholder="Produktname" style="background:#fff"></div>
+      <div class="form-group"><label class="form-label">Verkäufe</label><input class="form-input" type="number" id="temu-prod-sold" placeholder="0" style="background:#fff"></div>
+      <button class="btn btn-sm" onclick="addTemuProd()" style="background:#92400e;color:#fff;border-color:#92400e;margin-right:0">Hinzufügen</button>
+    </div>
+    <div id="temu-prod-list"></div>
+  </div>
+</div>
+
+<!-- KPI & CHARTS -->
+<div id="panel-kpi" class="panel">
+  <div class="page-header">
+    <div><div class="page-title">KPI & Charts</div><div class="page-sub">Monatsdaten → Charts automatisch</div></div>
+    <button class="btn" onclick="saveAll()">Speichern</button>
+  </div>
+  <div class="section-label">Monatsdaten</div>
+  <div class="month-inputs" id="kpi-month-inputs"></div>
+  <div class="charts-2">
+    <div class="chart-card chart-full" style="grid-column:1/-1">
+      <div class="chart-card-title">Umsatzentwicklung</div>
+      <div class="chart-card-sub">Monatlicher Umsatz in €</div>
+      <div class="chart-wrap" style="height:200px"><canvas id="chart-kpi-revenue"></canvas></div>
+    </div>
+  </div>
+  <div class="charts-2">
+    <div class="chart-card">
+      <div class="chart-card-title">Gewinnmarge</div>
+      <div class="chart-card-sub">% pro Monat</div>
+      <div class="chart-wrap"><canvas id="chart-kpi-margin"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Retourenquote</div>
+      <div class="chart-card-sub">% pro Monat</div>
+      <div class="chart-wrap"><canvas id="chart-kpi-returns"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Bestellungen / Tag</div>
+      <div class="chart-card-sub">Ø pro Monat</div>
+      <div class="chart-wrap"><canvas id="chart-kpi-orders"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">B2B Umsatz</div>
+      <div class="chart-card-sub">€ pro Monat</div>
+      <div class="chart-wrap"><canvas id="chart-kpi-b2b"></canvas></div>
+    </div>
+  </div>
+  <div class="section-label">KPI-Tabelle (letzter Monat)</div>
+  <div class="kpi-table">
+    <div class="kpi-header"><span>Kennzahl</span><span style="text-align:right">Ziel</span><span style="text-align:right">Ist</span><span style="text-align:right">Trend</span></div>
+    <div class="kpi-row"><span class="kpi-name">Monatsumsatz (€)</span><span class="kpi-target">60.000</span><span class="kpi-input" id="kd-revenue" style="text-align:right">—</span><span class="kpi-trend" id="tr1">—</span></div>
+    <div class="kpi-row"><span class="kpi-name">Gewinnmarge (%)</span><span class="kpi-target">18%</span><span class="kpi-input" id="kd-margin" style="text-align:right">—</span><span class="kpi-trend" id="tr2">—</span></div>
+    <div class="kpi-row"><span class="kpi-name">Bestellungen / Tag</span><span class="kpi-target">80</span><span class="kpi-input" id="kd-orders" style="text-align:right">—</span><span class="kpi-trend" id="tr3">—</span></div>
+    <div class="kpi-row"><span class="kpi-name">Retourenquote (%)</span><span class="kpi-target">&lt;5%</span><span class="kpi-input" id="kd-ret" style="text-align:right">—</span><span class="kpi-trend" id="tr4">—</span></div>
+    <div class="kpi-row"><span class="kpi-name">B2B Umsatz (€)</span><span class="kpi-target">5.000</span><span class="kpi-input" id="kd-b2b" style="text-align:right">—</span><span class="kpi-trend" id="tr5">—</span></div>
+    <div class="kpi-row"><span class="kpi-name">Amazon Status</span><span class="kpi-target">Aktiv</span><span style="font-size:12px;text-align:right"><span class="badge badge-red">Gesperrt</span></span><span class="kpi-trend trend-down">▼</span></div>
+  </div>
+  <div class="section-label">Notizen</div>
+  <textarea class="note-area" id="kpi-notes" placeholder="Beobachtungen, Maßnahmen..." oninput="saveAll()"></textarea>
+</div>
+
+<!-- ROADMAP -->
+<div id="panel-roadmap" class="panel">
+  <div class="page-header"><div><div class="page-title">Fahrplan</div><div class="page-sub">Finanzielle Unabhängigkeit — 5 Phasen</div></div></div>
+  <div class="phase-item done-phase"><div class="phase-dot done">✓</div><div class="phase-content"><div class="phase-header-row"><span class="phase-title">Phase 0 — Fundament</span><span class="badge badge-gray">2021–2024 · Abgeschlossen</span></div><div class="phase-sub">Multikanal aufgebaut, Prozesse eingespielt, Markt verstanden.</div><div class="phase-task">5 Plattformen aktiv (Kaufland, eBay, Temu, Worten, Eigenshop)</div><div class="phase-task">60 Bestellungen/Tag solo · 30–50k € Monatsumsatz · Billbee als ERP</div></div></div>
+  <div class="phase-item active-phase"><div class="phase-dot active">1</div><div class="phase-content"><div class="phase-header-row"><span class="phase-title">Phase 1 — Stabilisierung</span><span class="badge badge-green">Jetzt aktiv · Monate 1–3</span></div><div class="phase-sub">Engpässe beseitigen, Amazon reaktivieren, Marge verbessern.</div><div class="phase-task">Amazon-Konto reaktivieren (Anwalt + Rechnungsdokumentation)</div><div class="phase-task">Top 20 Produkte nach Marge analysieren — schwache rauswerfen</div><div class="phase-task">DHL-Konditionen nachverhandeln · Repricing-Tool einführen</div><div class="phase-task">Unternehmensstruktur: Gewerbe → GmbH vorbereiten</div><div class="phase-task">Kaufland International prüfen (CZ, SK, PL, RO)</div></div></div>
+  <div class="phase-item"><div class="phase-dot pending">2</div><div class="phase-content"><div class="phase-header-row"><span class="phase-title">Phase 2 — Automatisierung</span><span class="badge badge-amber">Monate 4–9</span></div><div class="phase-sub">Zeit zurückgewinnen, Volumen steigern ohne mehr Arbeit.</div><div class="phase-task">3PL oder Paketzentrum testen (Versand auslagern)</div><div class="phase-task">Minijobber erweitern · Automatische Bestellauslösung</div><div class="phase-task">B2B systematisieren: Angebotsvorlagen + CRM</div><div class="phase-task">Amazon nach Reaktivierung auf 20k+/Monat skalieren</div></div></div>
+  <div class="phase-item"><div class="phase-dot pending">3</div><div class="phase-content"><div class="phase-header-row"><span class="phase-title">Phase 3 — Eigenmarke</span><span class="badge badge-gray">Monate 10–18</span></div><div class="phase-sub">Aus Reseller wird Markeninhaber — höhere Margen, mehr Kontrolle.</div><div class="phase-task">Top-Seller-Kategorie für Private Label identifizieren</div><div class="phase-task">Marke anmelden (DPMA / EUIPO) · Amazon Brand Registry</div><div class="phase-task">Otto + MediaMarkt Marketplace beantragen (ab 2026)</div></div></div>
+  <div class="phase-item"><div class="phase-dot pending">4</div><div class="phase-content"><div class="phase-header-row"><span class="phase-title">Phase 4 — Vermögensaufbau</span><span class="badge badge-gray">Ab Monat 18</span></div><div class="phase-sub">Cashflow aus E-Commerce in Assets umwandeln.</div><div class="phase-task">GmbH + Holding-Struktur aufbauen (Steueroptimierung)</div><div class="phase-task">Monatlichen Überschuss in ETF-Sparplan (MSCI World)</div><div class="phase-task">Hauptjob kündigen wenn Business 4k+ netto/Monat liefert</div><div class="phase-task">Exit-Option: Business-Verkauf (2–4x Jahresgewinn)</div></div></div>
+</div>
+
+<!-- FOKUS -->
+<div id="panel-fokus" class="panel">
+  <div class="page-header"><div><div class="page-title">Wochenfokus</div><div class="page-sub">Top-Prioritäten & wöchentliche Routinen</div></div></div>
+  <div class="section-label">Top 3 diese Woche</div>
+  <div style="margin-bottom:20px">
+    <div class="focus-input-row"><span class="focus-num">1</span><input class="focus-input" id="focus1" placeholder="z.B. Amazon-Unterlagen für Anwalt zusammenstellen" oninput="saveAll()"></div>
+    <div class="focus-input-row"><span class="focus-num">2</span><input class="focus-input" id="focus2" placeholder="z.B. Top 20 Produkte nach Marge auswerten" oninput="saveAll()"></div>
+    <div class="focus-input-row"><span class="focus-num">3</span><input class="focus-input" id="focus3" placeholder="z.B. DHL Konditionen anfragen" oninput="saveAll()"></div>
+  </div>
+  <div class="section-label">Wöchentliche Routinen</div>
+  <div class="task-card">
+    <div id="tasks-weekly"></div>
+    <div class="add-task-row"><input class="add-task-input" id="add-weekly" placeholder="+ Routine hinzufügen..." onkeydown="if(event.key==='Enter')addTask('weekly')"><button class="add-task-btn" onclick="addTask('weekly')">+</button></div>
+  </div>
+  <div class="section-label">Notizen & Ideen</div>
+  <textarea class="note-area" id="focus-notes" placeholder="Produktideen, Lieferantenkontakte, offene Fragen..." oninput="saveAll()"></textarea>
+</div>
+
+</main>
+</div>
+</div><!-- end app-content -->
+<div class="save-toast" id="toast">Gespeichert ✓</div>
+
+<script>
+const MS=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const PLAT_COLORS={Kaufland:'#2563eb',eBay:'#16a34a',Temu:'#d97706',Eigenshop:'#7c3aed',Worten:'#9aa0ae'};
+
+// ── DEFAULT TASKS ──
+const DEF={
+  morning:[
+    {text:'Neue Bestellungen prüfen & verarbeiten (Billbee)',done:false,badge:'täglich',bc:'badge-red'},
+    {text:'Kundenanfragen beantworten (alle Plattformen)',done:false,badge:'täglich',bc:'badge-red'},
+    {text:'Lagerbestand kritischer Artikel prüfen',done:false,badge:'täglich',bc:'badge-amber'},
+    {text:'Preise auf Kaufland/eBay mit Markt abgleichen',done:false,badge:'täglich',bc:'badge-amber'}
+  ],
+  midday:[
+    {text:'Pakete packen & versandfertig machen',done:false,badge:'täglich',bc:'badge-red'},
+    {text:'Einkaufsrechnungen ablegen & dokumentieren',done:false,badge:'täglich',bc:'badge-amber'},
+    {text:'Lieferantenkontakt / Nachbestellungen anstoßen',done:false,badge:'3x/Woche',bc:'badge-gray'},
+    {text:'Retouren bearbeiten & Rückerstattungen',done:false,badge:'bei Bedarf',bc:'badge-gray'}
+  ],
+  evening:[
+    {text:'1 neues Produkt recherchieren oder listen',done:false,badge:'täglich',bc:'badge-blue'},
+    {text:'B2B Angebot fertigstellen oder nachfassen',done:false,badge:'3x/Woche',bc:'badge-gray'},
+    {text:'Amazon-Fall dokumentieren / Anwalt updaten',done:false,badge:'täglich',bc:'badge-red'},
+    {text:'Tagesumsatz & KPIs eintragen',done:false,badge:'täglich',bc:'badge-blue'}
+  ],
+  weekly:[
+    {text:'Monatliche KPIs aktualisieren',done:false,badge:'Mo',bc:'badge-gray'},
+    {text:'Einkaufsliste für nächste Woche vorbereiten',done:false,badge:'Di',bc:'badge-gray'},
+    {text:'B2B Pipeline reviewen & nachfassen',done:false,badge:'Mi',bc:'badge-gray'},
+    {text:'Neue Produkte recherchieren (30 min)',done:false,badge:'Do',bc:'badge-gray'},
+    {text:'Wochenumsatz & Gewinn auswerten',done:false,badge:'Fr',bc:'badge-gray'},
+    {text:'Anwalt Amazon-Update einholen',done:false,badge:'Fr',bc:'badge-red'},
+    {text:'Strategische Aufgabe aus Fahrplan angehen',done:false,badge:'Sa',bc:'badge-blue'}
+  ]
+};
+
+let tasks=JSON.parse(JSON.stringify(DEF));
+let retouren=[];
+let monthlyData={};
+let temuProds=[];
+let billbeeProds=[];
+let prodSortKey='sold';
+let charts={};
+
+// ── TASKS ──
+function renderTG(g){
+  const c=document.getElementById('tasks-'+g);if(!c)return;
+  c.innerHTML='';
+  tasks[g].forEach((t,i)=>{
+    const r=document.createElement('div');r.className='task-row';
+    r.innerHTML=`<input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${g}',${i},this)"><span class="task-text${t.done?' done':''}" ondblclick="editTask(this,'${g}',${i})">${t.text}</span><span class="badge ${t.bc||'badge-gray'}">${t.badge||''}</span><button class="del-task" onclick="delTask('${g}',${i})">×</button>`;
+    c.appendChild(r);
+  });
+  updateTC(g);updateProg();
+}
+function renderAllTasks(){['morning','midday','evening','weekly'].forEach(g=>renderTG(g))}
+function toggleTask(g,i,cb){tasks[g][i].done=cb.checked;cb.parentElement.querySelector('.task-text').classList.toggle('done',cb.checked);updateTC(g);updateProg();saveAll()}
+function editTask(el,g,i){
+  el.contentEditable='true';el.focus();
+  const r=document.createRange();r.selectNodeContents(el);window.getSelection().removeAllRanges();window.getSelection().addRange(r);
+  el.onblur=()=>{el.contentEditable='false';tasks[g][i].text=el.textContent.trim()||tasks[g][i].text;saveAll()};
+  el.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();el.blur()}};
+}
+function delTask(g,i){tasks[g].splice(i,1);renderTG(g);saveAll()}
+function addTask(g){
+  const inp=document.getElementById('add-'+g);const txt=inp.value.trim();if(!txt)return;
+  tasks[g].push({text:txt,done:false,badge:'',bc:'badge-gray'});inp.value='';renderTG(g);saveAll();
+}
+function updateTC(g){
+  const el=document.getElementById(g+'-count');if(!el)return;
+  el.textContent=tasks[g].filter(t=>t.done).length+'/'+tasks[g].length;
+}
+function updateProg(){
+  const all=[...tasks.morning,...tasks.midday,...tasks.evening];
+  const done=all.filter(t=>t.done).length;
+  const pct=all.length?Math.round(done/all.length*100):0;
+  document.getElementById('progress-fill').style.width=pct+'%';
+  document.getElementById('progress-pct').textContent=pct+'%';
+}
+function manualDayReset(){
+  if(!confirm('Tagesmetriken & Tasks zurücksetzen?')) return;
+  ['morning','midday','evening'].forEach(g=>{tasks[g].forEach(t=>t.done=false);renderTG(g)});
+  document.getElementById('m-orders').value='';
+  document.getElementById('m-revenue').value='';
+  document.getElementById('m-returns').value='';
+  document.getElementById('m-profit').textContent='—';
+  document.getElementById('daily-notes').value='';
+  document.getElementById('temu-orders').value='';
+  document.getElementById('temu-revenue').value='';
+  document.getElementById('temu-returns-daily').value='';
+  saveAll();
+}
+
+function resetTasks(){['morning','midday','evening'].forEach(g=>{tasks[g].forEach(t=>t.done=false);renderTG(g)});saveAll()}
+function calcMetrics(){
+  const rev=parseFloat(document.getElementById('m-revenue').value)||0;
+  document.getElementById('m-profit').textContent=rev?Math.round(rev*.15).toLocaleString('de-DE')+'€':'—';
+}
+
+// ── UMSATZ TAB ──
+let umsatzTab='gesamt';
+function showUmsatzTab(t){
+  umsatzTab=t;
+  ['gesamt','plattform','eingabe'].forEach(x=>{
+    document.getElementById('utab-'+x+'-content').style.display=x===t?'block':'none';
+    const btn=document.getElementById('utab-'+x);
+    btn.style.borderColor=x===t?'var(--accent)':'var(--border2)';
+    btn.style.color=x===t?'var(--accent)':'var(--text2)';
+  });
+  if(t==='gesamt'||t==='plattform') buildUmsatzCharts();
+  if(t==='eingabe') buildMonthInputs('umsatz-month-inputs');
+}
+
+function getLast6(){
+  const r=[];const now=new Date();
+  for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);r.push({key:d.getFullYear()+'-'+(d.getMonth()+1).toString().padStart(2,'0'),label:MS[d.getMonth()]+' '+d.getFullYear().toString().slice(2)})}
+  return r;
+}
+
+function buildMonthInputs(containerId){
+  const months=getLast6();
+  const g=document.getElementById(containerId);if(!g)return;
+  g.innerHTML='';
+  months.forEach(m=>{
+    const d=monthlyData[m.key]||{};
+    const div=document.createElement('div');div.className='month-input-group';
+    div.innerHTML=`<div class="month-input-label">${m.label}</div>
+      <div class="month-input-sub">Umsatz (€)</div><input class="month-mini-input" type="number" placeholder="—" value="${d.revenue||''}" oninput="updMD('${m.key}','revenue',this.value)">
+      <div class="month-input-sub">Marge (%)</div><input class="month-mini-input" type="number" placeholder="—" value="${d.margin||''}" oninput="updMD('${m.key}','margin',this.value)">
+      <div class="month-input-sub">Bestell./Tag</div><input class="month-mini-input" type="number" placeholder="—" value="${d.orders||''}" oninput="updMD('${m.key}','orders',this.value)">
+      <div class="month-input-sub">Retourenquote (%)</div><input class="month-mini-input" type="number" placeholder="—" value="${d.retouren||''}" oninput="updMD('${m.key}','retouren',this.value)">
+      <div class="month-input-sub">B2B Umsatz (€)</div><input class="month-mini-input" type="number" placeholder="—" value="${d.b2b||''}" oninput="updMD('${m.key}','b2b',this.value)">
+      <div class="month-input-sub">Kaufland (€)</div><input class="month-mini-input" type="number" placeholder="—" value="${d.kaufland||''}" oninput="updMD('${m.key}','kaufland',this.value)">
+      <div class="month-input-sub">eBay (€)</div><input class="month-mini-input" type="number" placeholder="—" value="${d.ebay||''}" oninput="updMD('${m.key}','ebay',this.value)">
+      <div class="month-input-sub">Temu (€)</div><input class="month-mini-input" type="number" placeholder="—" value="${d.temu||''}" oninput="updMD('${m.key}','temu',this.value)">
+      <div class="month-input-sub">Eigenshop (€)</div><input class="month-mini-input" type="number" placeholder="—" value="${d.shop||''}" oninput="updMD('${m.key}','shop',this.value)">
+      <div class="month-input-sub">Worten (€)</div><input class="month-mini-input" type="number" placeholder="—" value="${d.worten||''}" oninput="updMD('${m.key}','worten',this.value)">`;
+    g.appendChild(div);
+  });
+}
+
+function updMD(key,field,value){
+  if(!monthlyData[key])monthlyData[key]={};
+  monthlyData[key][field]=value?parseFloat(value):null;
+  buildUmsatzCharts();buildKPICharts();updateKPITable();saveAll();
+}
+
+function buildUmsatzCharts(){
+  const months=getLast6();
+  const labels=months.map(m=>m.label);
+  const get=f=>months.map(m=>monthlyData[m.key]?.[f]??null);
+
+  // Summary metrics
+  const lastKey=months[months.length-1].key;
+  const ld=monthlyData[lastKey]||{};
+  const todayRev=parseFloat(document.getElementById('m-revenue').value)||0;
+  document.getElementById('u-today').textContent=todayRev?todayRev.toLocaleString('de-DE')+'€':'—';
+  document.getElementById('u-month').textContent=ld.revenue?ld.revenue.toLocaleString('de-DE')+'€':'—';
+  const yearTotal=Object.entries(monthlyData).filter(([k])=>k.startsWith(new Date().getFullYear()+'')).reduce((s,[,v])=>s+(v.revenue||0),0);
+  document.getElementById('u-year').textContent=yearTotal?yearTotal.toLocaleString('de-DE')+'€':'—';
+  document.getElementById('u-avg').textContent=ld.revenue&&ld.orders?Math.round(ld.revenue/30/ld.orders).toLocaleString('de-DE')+'€':'—';
+
+  // Platform metrics
+  const platforms=['kaufland','ebay','temu','shop','worten'];
+  const pids=['kaufland','ebay','temu','shop','worten'];
+  pids.forEach((p,i)=>{const el=document.getElementById('pu-'+p);if(el)el.textContent=ld[platforms[i]]?(ld[platforms[i]]).toLocaleString('de-DE')+'€':'—'});
+
+  mkChart('chart-umsatz-gesamt','line',labels,[{label:'Umsatz (€)',data:get('revenue'),borderColor:'#2563eb',backgroundColor:'#2563eb15',borderWidth:2,pointRadius:4,tension:.3,fill:true,spanGaps:true}],'€');
+  mkChart('chart-gewinn','line',labels,[{label:'Gewinn (€)',data:get('revenue').map(v=>v?Math.round(v*.15):null),borderColor:'#16a34a',backgroundColor:'#16a34a15',borderWidth:2,pointRadius:4,tension:.3,fill:true,spanGaps:true}],'€');
+  mkChart('chart-bestellungen','bar',labels,[{label:'Bestell./Tag',data:get('orders'),backgroundColor:'#7c3aed22',borderColor:'#7c3aed',borderWidth:1.5,borderRadius:4}],'');
+
+  // Platform pie
+  const platVals=[ld.kaufland,ld.ebay,ld.temu,ld.shop,ld.worten].map(v=>v||0);
+  const platLabels=['Kaufland','eBay','Temu','Eigenshop','Worten'];
+  mkPieChart('chart-plattform-pie',platLabels,platVals);
+
+  // Platform line
+  const datasets=platLabels.map((name,i)=>({
+    label:name,
+    data:months.map(m=>monthlyData[m.key]?.[['kaufland','ebay','temu','shop','worten'][i]]??null),
+    borderColor:Object.values(PLAT_COLORS)[i],backgroundColor:'transparent',borderWidth:1.5,pointRadius:3,tension:.3,spanGaps:true
+  }));
+  mkChart('chart-plattform-line','line',labels,datasets,'€');
+
+  // Platform bars
+  const maxV=Math.max(...platVals,1);
+  const bc=document.getElementById('platform-bars');
+  if(bc){bc.innerHTML=platLabels.map((n,i)=>`
+    <div class="platform-bar-row">
+      <span style="font-size:12px;color:var(--text2);width:80px;flex-shrink:0">${n}</span>
+      <div class="platform-bar-bg"><div class="platform-bar-fill" style="width:${Math.round(platVals[i]/maxV*100)}%;background:${Object.values(PLAT_COLORS)[i]}"></div></div>
+      <span style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text2);min-width:70px;text-align:right">${platVals[i]?platVals[i].toLocaleString('de-DE')+'€':'—'}</span>
+    </div>`).join('')}
+}
+
+// ── RETOUREN ──
+function addRetoure(){
+  const prod=document.getElementById('ret-product').value.trim();
+  if(!prod){document.getElementById('ret-product').focus();return}
+  const platform=document.getElementById('ret-platform').value;
+  const reason=document.getElementById('ret-reason').value;
+  const price=parseFloat(document.getElementById('ret-price').value)||0;
+  const shipping=parseFloat(document.getElementById('ret-shipping').value)||0;
+  const now=new Date();
+  retouren.push({id:Date.now(),prod,platform,reason,price,shipping,date:now.toLocaleDateString('de-DE'),month:MS[now.getMonth()]+' '+now.getFullYear(),monthKey:now.getFullYear()+'-'+(now.getMonth()+1).toString().padStart(2,'0')});
+  document.getElementById('ret-product').value='';
+  document.getElementById('ret-price').value='';
+  document.getElementById('ret-shipping').value='';
+  renderRetouren();updateRetMonthFilter();buildRetCharts();saveAll();
+}
+
+function delRetoure(id){retouren=retouren.filter(r=>r.id!==id);renderRetouren();updateRetMonthFilter();buildRetCharts();saveAll()}
+
+function updateRetMonthFilter(){
+  const sel=document.getElementById('ret-filter-month');const cur=sel.value;
+  const months=[...new Set(retouren.map(r=>r.monthKey))].sort().reverse();
+  sel.innerHTML='<option value="all">Alle Monate</option>'+months.map(m=>{const p=m.split('-');return`<option value="${m}" ${m===cur?'selected':''}>${MS[parseInt(p[1])-1]+' '+p[0]}</option>`}).join('');
+}
+
+function renderRetouren(){
+  const filter=document.getElementById('ret-filter-month').value;
+  const filtered=filter==='all'?retouren:retouren.filter(r=>r.monthKey===filter);
+  const list=document.getElementById('ret-list');
+  list.innerHTML=filtered.length?[...filtered].reverse().map(r=>{
+    const loss=((r.price||0)+(r.shipping||0));
+    return`<div class="table-row" style="grid-template-columns:1fr 110px 130px 80px 80px 80px 90px 36px">
+      <span style="font-weight:500">${r.prod}</span>
+      <span><span class="badge badge-gray">${r.platform}</span></span>
+      <span style="color:var(--text2);font-size:12px">${r.reason}</span>
+      <span style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--text2)">${r.price?r.price.toFixed(2)+'€':'—'}</span>
+      <span style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--text2)">${r.shipping?r.shipping.toFixed(2)+'€':'—'}</span>
+      <span style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:${loss>0?'var(--red)':'var(--text3)'}">${loss>0?'-'+loss.toFixed(2)+'€':'—'}</span>
+      <span style="color:var(--text3);font-size:12px;font-family:'DM Mono',monospace">${r.date}</span>
+      <button class="del-btn" onclick="delRetoure(${r.id})">×</button>
+    </div>`}).join(''):'<div class="table-empty">Noch keine Retouren erfasst</div>';
+
+  // Top products
+  const byProd={};filtered.forEach(r=>{byProd[r.prod]=(byProd[r.prod]||0)+1});
+  const topProds=Object.entries(byProd).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const el=document.getElementById('ret-top-products');
+  if(el)el.innerHTML=topProds.length?topProds.map(([name,count],i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--border)">
+      <div class="rank-badge ${i<3?'rank-'+(i+1):'rank-o'}">${i+1}</div>
+      <span style="flex:1;font-size:13px">${name.length>30?name.slice(0,30)+'…':name}</span>
+      <span style="font-family:'DM Mono',monospace;font-weight:600;color:var(--red);font-size:13px">${count}×</span>
+    </div>`).join(''):'<div class="table-empty">Keine Daten</div>';
+
+  // Summary with cost totals
+  const byPlat={};filtered.forEach(r=>{byPlat[r.platform]=(byPlat[r.platform]||0)+1});
+  const totalArtikelverlust=filtered.reduce((s,r)=>s+(r.price||0),0);
+  const totalVersandverlust=filtered.reduce((s,r)=>s+(r.shipping||0),0);
+  const totalVerlust=totalArtikelverlust+totalVersandverlust;
+  const sumEl=document.getElementById('ret-summary');
+  if(sumEl)sumEl.innerHTML=`
+    <div style="padding:12px 16px">
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text2)">Retouren gesamt</span><span style="font-weight:600;font-family:'DM Mono',monospace">${filtered.length}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text2)">Artikelverlust</span><span style="font-weight:600;font-family:'DM Mono',monospace;color:var(--red)">${totalArtikelverlust>0?'-'+totalArtikelverlust.toFixed(2)+'€':'—'}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text2)">Versandkosten</span><span style="font-weight:600;font-family:'DM Mono',monospace;color:var(--red)">${totalVersandverlust>0?'-'+totalVersandverlust.toFixed(2)+'€':'—'}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;font-weight:600"><span>Gesamtverlust</span><span style="font-family:'DM Mono',monospace;color:var(--red)">${totalVerlust>0?'-'+totalVerlust.toFixed(2)+'€':'—'}</span></div>
+      ${Object.entries(byPlat).sort((a,b)=>b[1]-a[1]).map(([p,c])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text2)">${p}</span><span style="font-weight:600;font-family:'DM Mono',monospace;color:${PLAT_COLORS[p]||'var(--text)'}">${c}×</span></div>`).join('')}
+      <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px"><span style="color:var(--text2)">Produkte betroffen</span><span style="font-weight:600;font-family:'DM Mono',monospace">${Object.keys(byProd).length}</span></div>
+    </div>`;
+}
+
+function buildRetCharts(){
+  const byPlat={};const byReason={};
+  retouren.forEach(r=>{byPlat[r.platform]=(byPlat[r.platform]||0)+1;byReason[r.reason]=(byReason[r.reason]||0)+1});
+  mkPieChart('chart-ret-platform',Object.keys(byPlat),Object.values(byPlat));
+  mkPieChart('chart-ret-reason',Object.keys(byReason),Object.values(byReason));
+
+  // Trend by month
+  const months=getLast6();
+  const mCounts=months.map(m=>retouren.filter(r=>r.monthKey===m.key).length);
+  mkChart('chart-ret-trend','bar',months.map(m=>m.label),[{label:'Retouren',data:mCounts,backgroundColor:'#dc262622',borderColor:'#dc2626',borderWidth:1.5,borderRadius:4}],'');
+}
+
+function exportRetouren(){
+  if(!retouren.length){alert('Keine Retouren.');return}
+  const rows=retouren.map(r=>`"${r.prod}";"${r.platform}";"${r.reason}";"${(r.price||0).toFixed(2)}";"${(r.shipping||0).toFixed(2)}";"${((r.price||0)+(r.shipping||0)).toFixed(2)}";"${r.date}";"${r.month}"`);
+  const blob=new Blob(['\uFEFFProdukt;Plattform;Grund;Artikelpreis;Versandkosten;Gesamtverlust;Datum;Monat\n'+rows.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='retouren.csv';a.click();
+}
+
+// ── PRODUKTE / BILLBEE ──
+function saveBBCreds(){
+  const k=document.getElementById('bb-apikey').value.trim();
+  const u=document.getElementById('bb-username').value.trim();
+  const p=document.getElementById('bb-password').value.trim();
+  if(!k||!u||!p){document.getElementById('bb-status').innerHTML='<span style="color:#dc2626">Bitte alle Felder ausfüllen.</span>';return}
+  localStorage.setItem('bb_k',k);localStorage.setItem('bb_u',u);localStorage.setItem('bb_p',p);
+  document.getElementById('bb-status').innerHTML='<span style="color:#16a34a">Gespeichert — lade Daten...</span>';
+  setTimeout(loadBillbeeProducts,500);
+}
+function getBBCreds(){return{k:localStorage.getItem('bb_k')||'',u:localStorage.getItem('bb_u')||'',p:localStorage.getItem('bb_p')||''}}
+
+async function loadBillbeeProducts(){
+  const c=getBBCreds();
+  if(!c.k||!c.u||!c.p){document.getElementById('bb-setup').style.display='block';return}
+  document.getElementById('bb-setup').style.display='none';
+  document.getElementById('prod-loading').style.display='block';
+  document.getElementById('prod-error').style.display='none';
+  document.getElementById('prod-chart-wrap').style.display='none';
+  document.getElementById('prod-table-wrap').style.display='none';
+
+  const days=parseInt(document.getElementById('prod-days').value)||30;
+  const from=new Date();from.setDate(from.getDate()-days);
+  const fromStr=from.toISOString().split('T')[0]+'T00:00:00';
+  const headers={'X-Billbee-Api-Key':c.k,'Authorization':'Basic '+btoa(c.u+':'+c.p)};
+
+  try{
+    let allOrders=[];let page=1;let more=true;
+    while(more&&page<=15){
+      const res=await fetch(`https://app.billbee.io/api/v1/orders?minOrderDate=${fromStr}&page=${page}&pageSize=250`,{headers});
+      if(res.status===401)throw new Error('Zugangsdaten ungültig — bitte API-Key, E-Mail und Passwort prüfen.');
+      if(res.status===429){await new Promise(r=>setTimeout(r,1000));continue}
+      if(!res.ok)throw new Error('API-Fehler '+res.status);
+      const json=await res.json();
+      const orders=json.Data||[];
+      allOrders=allOrders.concat(orders);
+      more=orders.length===250;page++;
+    }
+    const map={};
+    allOrders.forEach(o=>{
+      const plat=detectPlat(o);
+      (o.OrderItems||[]).forEach(item=>{
+        const name=item.Product?.Title||'Unbekannt';
+        const sku=item.Product?.SKU||'';
+        const key=sku||name;
+        if(!map[key])map[key]={name,sku,sold:0,revenue:0,platforms:{}};
+        map[key].sold+=item.Quantity||1;
+        map[key].revenue+=(item.TotalPrice||0);
+        map[key].platforms[plat]=(map[key].platforms[plat]||0)+(item.Quantity||1);
+      });
+    });
+    billbeeProds=Object.values(map).map((p,i)=>({id:i,name:p.name,sku:p.sku,sold:Math.round(p.sold),revenue:Math.round(p.revenue*100)/100,platform:Object.entries(p.platforms).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—'}));
+    document.getElementById('prod-loading').style.display='none';
+    renderProds();
+  }catch(e){
+    document.getElementById('prod-loading').style.display='none';
+    const er=document.getElementById('prod-error');er.style.display='block';er.textContent='Fehler: '+e.message;
+    if(e.message.includes('ungültig'))document.getElementById('bb-setup').style.display='block';
+  }
+}
+
+function detectPlat(o){
+  const tags=(o.Tags||[]).join(' ').toLowerCase();
+  const comment=(o.SellerComment||'').toLowerCase();
+  if(tags.includes('kaufland')||comment.includes('kaufland'))return'Kaufland';
+  if(tags.includes('ebay')||comment.includes('ebay'))return'eBay';
+  if(tags.includes('worten')||comment.includes('worten'))return'Worten';
+  return'Eigenshop';
+}
+
+function sortProds(key){
+  prodSortKey=key;
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active-sort'));
+  const el=document.getElementById('sort-'+key);if(el)el.classList.add('active-sort');
+  renderProds();
+}
+
+function renderProds(){
+  const sorted=[...billbeeProds].sort((a,b)=>b[prodSortKey]-a[prodSortKey]);
+  const maxV=sorted.length?Math.max(...sorted.map(p=>p[prodSortKey])):1;
+  const list=document.getElementById('prod-list');if(!list)return;
+  if(!sorted.length){list.innerHTML='<div class="table-empty">Keine Daten — Aktualisieren klicken</div>';return}
+  document.getElementById('prod-chart-wrap').style.display='block';
+  document.getElementById('prod-table-wrap').style.display='block';
+  document.getElementById('prod-chart-sub').textContent='nach '+(prodSortKey==='sold'?'Verkäufen':'Umsatz');
+
+  list.innerHTML=sorted.slice(0,50).map((p,i)=>{
+    const rc=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-o';
+    const bw=maxV?Math.round(p[prodSortKey]/maxV*100):0;
+    return`<div class="table-row" style="grid-template-columns:2fr 110px 80px 100px 36px">
+      <div><div style="display:flex;align-items:center;gap:8px"><div class="rank-badge ${rc}">${i+1}</div><div><div style="font-size:13px;font-weight:500">${p.name.length>42?p.name.slice(0,42)+'…':p.name}</div>${p.sku?`<div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${p.sku}</div>`:''}</div></div><div class="bar-mini"><div class="bar-mini-fill" style="width:${bw}%"></div></div></div>
+      <span style="text-align:right"><span class="badge badge-gray">${p.platform}</span></span>
+      <span style="text-align:right;font-family:'DM Mono',monospace;font-size:13px">${p.sold.toLocaleString('de-DE')}×</span>
+      <span style="text-align:right;font-family:'DM Mono',monospace;font-size:13px">${p.revenue.toLocaleString('de-DE',{maximumFractionDigits:0})}€</span>
+      <span></span>
+    </div>`;
+  }).join('');
+
+  const top10=sorted.slice(0,10);
+  const lbl=top10.map(p=>p.name.length>20?p.name.slice(0,20)+'…':p.name);
+  const vals=top10.map(p=>prodSortKey==='sold'?p.sold:p.revenue);
+  const col=prodSortKey==='sold'?'#16a34a':'#2563eb';
+  mkChart('chart-products','bar',lbl,[{label:prodSortKey==='sold'?'Verkäufe':'Umsatz (€)',data:vals,backgroundColor:col+'22',borderColor:col,borderWidth:1.5,borderRadius:4}],prodSortKey==='sold'?'':'€');
+}
+
+function addTemuProd(){
+  const name=document.getElementById('temu-prod-name').value.trim();
+  const sold=parseInt(document.getElementById('temu-prod-sold').value)||0;
+  if(!name)return;
+  temuProds.push({id:Date.now(),name,sold});
+  document.getElementById('temu-prod-name').value='';document.getElementById('temu-prod-sold').value='';
+  renderTemuProds();saveAll();
+}
+function delTemuProd(id){temuProds=temuProds.filter(p=>p.id!==id);renderTemuProds();saveAll()}
+function renderTemuProds(){
+  const el=document.getElementById('temu-prod-list');if(!el)return;
+  el.innerHTML=temuProds.sort((a,b)=>b.sold-a.sold).map(p=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid #fbd38d;font-size:13px">
+      <span style="flex:1;color:#92400e">${p.name}</span>
+      <span style="font-family:'DM Mono',monospace;color:#92400e;font-weight:600">${p.sold}×</span>
+      <button class="del-btn" onclick="delTemuProd(${p.id})" style="color:#92400e">×</button>
+    </div>`).join('');
+}
+
+// ── KPI CHARTS ──
+function buildKPICharts(){
+  const months=getLast6();const labels=months.map(m=>m.label);
+  const get=f=>months.map(m=>monthlyData[m.key]?.[f]??null);
+  mkChart('chart-kpi-revenue','line',labels,[{label:'Umsatz €',data:get('revenue'),borderColor:'#2563eb',backgroundColor:'#2563eb15',borderWidth:2,pointRadius:4,tension:.3,fill:true,spanGaps:true}],'€');
+  mkChart('chart-kpi-margin','line',labels,[{label:'Marge %',data:get('margin'),borderColor:'#16a34a',backgroundColor:'#16a34a15',borderWidth:2,pointRadius:4,tension:.3,fill:true,spanGaps:true}],'%');
+  mkChart('chart-kpi-returns','line',labels,[{label:'Retourenquote %',data:get('retouren'),borderColor:'#dc2626',backgroundColor:'#dc262615',borderWidth:2,pointRadius:4,tension:.3,fill:true,spanGaps:true}],'%');
+  mkChart('chart-kpi-orders','bar',labels,[{label:'Bestell./Tag',data:get('orders'),backgroundColor:'#7c3aed22',borderColor:'#7c3aed',borderWidth:1.5,borderRadius:4}],'');
+  mkChart('chart-kpi-b2b','bar',labels,[{label:'B2B €',data:get('b2b'),backgroundColor:'#d9770622',borderColor:'#d97706',borderWidth:1.5,borderRadius:4}],'€');
+}
+
+function updateKPITable(){
+  const months=getLast6();const last=months[months.length-1];const d=monthlyData[last.key]||{};
+  const fmt=(v,s)=>v!=null?(s==='€'?v.toLocaleString('de-DE')+'€':v+s):'—';
+  const tr=(v,t,id,inv)=>{
+    const el=document.getElementById(id);if(!el||v==null){el&&(el.textContent='—',el.className='kpi-trend trend-flat');return}
+    const diff=((v-t)/t*100).toFixed(0);const ok=inv?v<=t:v>=t;
+    el.textContent=ok?'▲ +'+Math.abs(diff)+'%':'▼ '+diff+'%';el.className='kpi-trend '+(ok?'trend-up':'trend-down');
+  };
+  document.getElementById('kd-revenue').textContent=fmt(d.revenue,'€');
+  document.getElementById('kd-margin').textContent=fmt(d.margin,'%');
+  document.getElementById('kd-orders').textContent=d.orders!=null?d.orders+'/Tag':'—';
+  document.getElementById('kd-ret').textContent=fmt(d.retouren,'%');
+  document.getElementById('kd-b2b').textContent=fmt(d.b2b,'€');
+  tr(d.revenue,60000,'tr1',false);tr(d.margin,18,'tr2',false);tr(d.orders,80,'tr3',false);tr(d.retouren,5,'tr4',true);tr(d.b2b,5000,'tr5',false);
+}
+
+// ── CHART HELPERS ──
+function mkChart(id,type,labels,datasets,yUnit){
+  const canvas=document.getElementById(id);if(!canvas)return;
+  if(charts[id]){charts[id].destroy()}
+  charts[id]=new Chart(canvas,{
+    type,data:{labels,datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:datasets.length>1,labels:{font:{size:11},color:'#5a6478',boxWidth:12}}},
+      scales:{
+        x:{grid:{color:'#e2e6ec'},ticks:{font:{size:10},color:'#9aa0ae',maxRotation:30}},
+        y:{grid:{color:'#e2e6ec'},ticks:{font:{size:10},color:'#9aa0ae',callback:v=>yUnit==='€'?v.toLocaleString('de-DE')+'€':yUnit?v+yUnit:v}}
+      }
+    }
+  });
+}
+
+function mkPieChart(id,labels,data){
+  const canvas=document.getElementById(id);if(!canvas)return;
+  if(charts[id]){charts[id].destroy()}
+  const colors=['#2563eb','#16a34a','#d97706','#7c3aed','#9aa0ae','#dc2626','#0891b2','#be185d'];
+  charts[id]=new Chart(canvas,{
+    type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:labels.map(l=>PLAT_COLORS[l]||colors[labels.indexOf(l)%colors.length]),borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},color:'#5a6478',boxWidth:12}}}}
+  });
+}
+
+// ── NAVIGATION ──
+function showPanel(id,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='umsatz')setTimeout(()=>{showUmsatzTab('gesamt');buildUmsatzCharts()},50);
+  if(id==='kpi')setTimeout(()=>{buildMonthInputs('kpi-month-inputs');buildKPICharts();updateKPITable()},50);
+  if(id==='retouren'){buildRetCharts();renderRetouren()}
+  if(id==='produkte'){
+    const c=getBBCreds();
+    if(c.k){document.getElementById('bb-setup').style.display='none';setTimeout(()=>{renderProds();renderTemuProds()},50)}
+    else document.getElementById('bb-setup').style.display='block';
+  }
+}
+
+// ── SAVE / LOAD ──
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1).toString().padStart(2,'0')+'-'+d.getDate().toString().padStart(2,'0')}
+
+function saveAll(){
+  const d={tasks,retouren,monthlyData,temuProds,
+    savedDate:todayStr(),
+    orders:document.getElementById('m-orders').value,
+    revenue:document.getElementById('m-revenue').value,
+    mreturns:document.getElementById('m-returns').value,
+    dailyNotes:document.getElementById('daily-notes').value,
+    kpiNotes:document.getElementById('kpi-notes').value,
+    focusNotes:document.getElementById('focus-notes').value,
+    focus1:document.getElementById('focus1').value,
+    focus2:document.getElementById('focus2').value,
+    focus3:document.getElementById('focus3').value,
+    temuOrders:document.getElementById('temu-orders').value,
+    temuRevenue:document.getElementById('temu-revenue').value,
+    temuReturnsD:document.getElementById('temu-returns-daily').value,
+  };
+  localStorage.setItem('biz_v4',JSON.stringify(d));showToast();
+}
+
+function loadAll(){
+  const raw=localStorage.getItem('biz_v4');if(!raw)return;
+  try{
+    const d=JSON.parse(raw);
+    const isNewDay = !d.savedDate || d.savedDate !== todayStr();
+
+    if(d.tasks){
+      tasks=d.tasks;
+      // Reset task checkboxes on new day, keep task list
+      if(isNewDay){
+        ['morning','midday','evening'].forEach(g=>{
+          tasks[g].forEach(t=>t.done=false);
+        });
+      }
+    }
+    if(d.retouren)retouren=d.retouren;
+    if(d.monthlyData)monthlyData=d.monthlyData;
+    if(d.temuProds)temuProds=d.temuProds;
+
+    // Daily metrics: reset on new day
+    if(!isNewDay){
+      if(d.orders)document.getElementById('m-orders').value=d.orders;
+      if(d.revenue){document.getElementById('m-revenue').value=d.revenue;calcMetrics()}
+      if(d.mreturns)document.getElementById('m-returns').value=d.mreturns;
+      if(d.dailyNotes)document.getElementById('daily-notes').value=d.dailyNotes;
+      if(d.temuOrders)document.getElementById('temu-orders').value=d.temuOrders;
+      if(d.temuRevenue)document.getElementById('temu-revenue').value=d.temuRevenue;
+      if(d.temuReturnsD)document.getElementById('temu-returns-daily').value=d.temuReturnsD;
+    } else {
+      // Show a subtle hint that it's a new day
+      setTimeout(()=>{
+        const toast=document.getElementById('toast');
+        toast.textContent='Guten Morgen! Neuer Tag — Tasks & Tagesmetriken zurückgesetzt ☀️';
+        toast.classList.add('show');
+        setTimeout(()=>{toast.classList.remove('show');toast.textContent='Gespeichert ✓'},3500);
+      },600);
+    }
+
+    // Persistent fields — always restore
+    if(d.kpiNotes)document.getElementById('kpi-notes').value=d.kpiNotes;
+    if(d.focusNotes)document.getElementById('focus-notes').value=d.focusNotes;
+    if(d.focus1)document.getElementById('focus1').value=d.focus1;
+    if(d.focus2)document.getElementById('focus2').value=d.focus2;
+    if(d.focus3)document.getElementById('focus3').value=d.focus3;
+    if(retouren.length){updateRetMonthFilter();renderRetouren();buildRetCharts()}
+    if(temuProds.length)renderTemuProds();
+    // Billbee creds
+    const bk=localStorage.getItem('bb_k');const bu=localStorage.getItem('bb_u');const bp=localStorage.getItem('bb_p');
+    if(bk)document.getElementById('bb-apikey').value=bk;
+    if(bu)document.getElementById('bb-username').value=bu;
+    if(bp)document.getElementById('bb-password').value=bp;
+    if(bk)document.getElementById('bb-setup').style.display='none';
+  }catch(e){}
+}
+
+function showToast(){const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
+
+function setDate(){
+  const d=new Date();const days=['So','Mo','Di','Mi','Do','Fr','Sa'];
+  document.getElementById('current-date').textContent=days[d.getDay()]+', '+d.getDate()+'. '+MS[d.getMonth()]+' '+d.getFullYear();
+}
+
+// ── PASSWORT ──
+const DEFAULT_PW = 'organizer2025';
+function checkLogin(){
+  const input = document.getElementById('login-input').value;
+  const stored = localStorage.getItem('org_pw') || DEFAULT_PW;
+  if(input === stored){
+    localStorage.setItem('org_auth', 'true');
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app-content').style.display='block';
+    setDate();loadAll();renderAllTasks();
+  } else {
+    document.getElementById('login-error').style.display='block';
+    document.getElementById('login-input').value='';
+    document.getElementById('login-input').focus();
+  }
+}
+
+function changePassword(){
+  const current = prompt('Aktuelles Passwort:');
+  const stored = localStorage.getItem('org_pw') || DEFAULT_PW;
+  if(current !== stored){alert('Falsches Passwort.');return}
+  const newPw = prompt('Neues Passwort:');
+  if(!newPw||newPw.length<4){alert('Passwort zu kurz (min. 4 Zeichen).');return}
+  const confirm = prompt('Neues Passwort bestätigen:');
+  if(newPw !== confirm){alert('Passwörter stimmen nicht überein.');return}
+  localStorage.setItem('org_pw', newPw);
+  localStorage.removeItem('org_auth');
+  alert('Passwort geändert! Bitte neu einloggen.');
+  location.reload();
+}
+
+// ── INIT ──
+setDate();
+// Check auth
+const isAuthed = localStorage.getItem('org_auth') === 'true';
+if(isAuthed){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-content').style.display='block';
+  loadAll();renderAllTasks();
+} else {
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app-content').style.display='none';
+  setTimeout(()=>document.getElementById('login-input').focus(), 100);
+}
+</script>
+</body>
+</html>
